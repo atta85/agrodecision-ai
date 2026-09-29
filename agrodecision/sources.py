@@ -14,6 +14,7 @@ PREFIX = {
     "org": "O",         # uploaded organisation document (SOP, lab report, ...)
     "default": "D",     # built-in placeholder data (prices, generic rules)
     "calc": "C",        # deterministic calculation done by the app
+    "library": "L",     # curated reference library (data/references.json)
 }
 
 RELIABILITY = {
@@ -26,6 +27,7 @@ RELIABILITY = {
     "org": "user-provided document",
     "default": "placeholder - edit before relying on it",
     "calc": "calculated by the app",
+    "library": "curated reference library (starter list - check the original)",
 }
 
 
@@ -38,6 +40,10 @@ class SourceRecord:
     retrieved: str
     reliability: str
     summary: str
+    publisher: str = ""
+    year: str = ""
+    source_type: str = ""
+    citation: str = ""
 
 
 class SourceRegistry:
@@ -45,7 +51,8 @@ class SourceRegistry:
         self._items: dict[str, SourceRecord] = {}
         self._counts: dict[str, int] = {}
 
-    def add(self, kind: str, title: str, summary: str, url: str = "") -> str:
+    def add(self, kind: str, title: str, summary: str, url: str = "", publisher: str = "", year: str = "",
+            source_type: str = "", citation: str = "") -> str:
         self._counts[kind] = self._counts.get(kind, 0) + 1
         sid = f"{PREFIX[kind]}{self._counts[kind]}"
         self._items[sid] = SourceRecord(
@@ -56,6 +63,10 @@ class SourceRegistry:
             retrieved=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
             reliability=RELIABILITY.get(kind, ""),
             summary=summary.strip(),
+            publisher=publisher,
+            year=year,
+            source_type=source_type,
+            citation=citation,
         )
         return sid
 
@@ -90,3 +101,27 @@ class SourceRegistry:
 
     def to_list(self) -> list[dict]:
         return [asdict(r) for r in self._items.values()]
+
+
+def classify_url(url: str) -> tuple[str, str]:
+    """Return (publisher/domain, type label) for a web address, so the bibliography shows how much weight it deserves."""
+    from urllib.parse import urlparse
+
+    host = (urlparse(url).netloc or "").lower().removeprefix("www.")
+    if not host:
+        return "", "web page"
+    if host.endswith(("fao.org", "who.int", "worldbank.org")):
+        label = "UN / international agency"
+    elif host.endswith("eppo.int"):
+        label = "intergovernmental plant-protection organisation"
+    elif ".gov" in host or host.endswith(("ars.usda.gov", "nifa.usda.gov")):
+        label = "government"
+    elif host.endswith((".edu", "ucanr.edu")) or host.startswith("extension.") or ".edu." in host or ".ac." in host:
+        label = "university / extension"
+    elif host.endswith(("cimmyt.org", "irri.org", "isric.org", "cabidigitallibrary.org")):
+        label = "research institute / publisher"
+    elif host.endswith("apsnet.org"):
+        label = "scientific society"
+    else:
+        label = "other web source"
+    return host, label
