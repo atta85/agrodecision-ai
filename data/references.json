@@ -1,0 +1,83 @@
+{
+  "_note": "Curated reference library. STARTER LIST: each entry's existence, publisher and scope were checked against the publisher's own page, but the summaries below only describe what each document COVERS (in our own words). They are not quotations and they do not prove any specific claim. Add your own entries (same fields) after an agronomist has reviewed the source. Only add material you are allowed to link to.",
+  "references": [
+    {
+      "id": "fao-iddp29",
+      "title": "Water quality for agriculture (FAO Irrigation and Drainage Paper 29, Rev. 1)",
+      "authors": "Ayers, R.S. and Westcot, D.W.",
+      "publisher": "Food and Agriculture Organization of the United Nations (FAO), Rome",
+      "year": "1985",
+      "url": "https://www.fao.org/3/t0234e/T0234E00.htm",
+      "source_type": "UN agency technical guide",
+      "topics": ["salinity", "salt", "irrigation water", "water quality", "leaching", "sodium", "drainage", "electrical conductivity", "salt stress", "irrigation"],
+      "summary": "Field guide for judging whether a water is suitable for irrigation. Covers salinity control and how to manage poor-quality irrigation water, including how salts from irrigation water can affect crops and soils."
+    },
+    {
+      "id": "fao-sb39",
+      "title": "Salt-affected soils and their management (FAO Soils Bulletin 39)",
+      "authors": "Abrol, I.P., Yadav, J.S.P. and Massoud, F.I.",
+      "publisher": "Food and Agriculture Organization of the United Nations (FAO), Rome",
+      "year": "1988",
+      "url": "https://www.fao.org/3/x5871e/x5871e00.htm",
+      "source_type": "UN agency technical bulletin",
+      "topics": ["salinity", "saline soil", "sodic soil", "kallar", "salt affected", "gypsum", "amendment", "leaching", "drainage", "reclamation", "electrical conductivity", "ph", "exchangeable sodium", "salt tolerance", "nutrient uptake"],
+      "summary": "Explains where salt-affected soils come from and how they are classified. Covers saline soils (measuring salinity, effects on plant growth, salt leaching, drainage, crop tolerance, nutrient availability) and sodic soils (measuring pH and sodicity, reclamation with amendments and organic manures)."
+    },
+    {
+      "id": "fao-iddp56",
+      "title": "Crop evapotranspiration - Guidelines for computing crop water requirements (FAO Irrigation and Drainage Paper 56)",
+      "authors": "Allen, R.G., Pereira, L.S., Raes, D. and Smith, M.",
+      "publisher": "Food and Agriculture Organization of the United Nations (FAO), Rome",
+      "year": "1998",
+      "url": "https://www.fao.org/3/x0490e/x0490e00.htm",
+      "source_type": "UN agency technical guide",
+      "topics": ["evapotranspiration", "et0", "crop water requirement", "irrigation scheduling", "water stress", "drought", "heat", "weather", "irrigation", "crop coefficient", "water balance"],
+      "summary": "Standard guideline for computing reference and crop evapotranspiration and crop water requirements. Describes how weather, crop characteristics and management affect evapotranspiration."
+    },
+    {
+      "id": "fao-who-code-2014",
+      "title": "The International Code of Conduct on Pesticide Management",
+      "authors": "FAO and WHO",
+      "publisher": "Food and Agriculture Organization of the United Nations and World Health Organization, Rome",
+      "year": "2014",
+      "url": "https://www.fao.org/3/i3604e/i3604e.pdf",
+      "source_type": "UN/WHO voluntary framework",
+      "topics": ["pesticide", "fungicide", "insecticide", "chemical", "spray", "treatment", "safety", "protective equipment", "registration", "label", "ipm", "integrated pest management", "hazardous pesticide", "disposal"],
+      "summary": "Voluntary international framework on good practice in managing pesticides through their whole life cycle, from production to disposal. Encourages integrated pest management and calls for removing highly hazardous pesticides where needed."
+    },
+    {
+      "id": "ucipm-citrus",
+      "title": "UC IPM Pest Management Guidelines: Citrus (UC ANR Publication 3441)",
+      "authors": "Grafton-Cardwell, E.E. et al. (University of California IPM Program)",
+      "publisher": "University of California Agriculture and Natural Resources (UC ANR), Statewide IPM Program",
+      "year": "continuously revised",
+      "url": "https://ipm.ucanr.edu/agriculture/citrus/",
+      "source_type": "University extension guideline (California conditions)",
+      "topics": ["citrus", "kinnow", "orange", "mandarin", "lemon", "disease", "gummosis", "fruit drop", "mite", "nematode", "psyllid", "huanglongbing", "monitoring", "ipm", "pest", "weed"],
+      "summary": "University-reviewed, monitoring-based integrated pest management guidelines for citrus covering diseases, insects, mites, nematodes and weeds. Written for California, so local conditions and registered products in other countries can differ."
+    },
+    {
+      "id": "soilgrids-2021",
+      "title": "SoilGrids 2.0: producing soil information for the globe with quantified spatial uncertainty",
+      "authors": "Poggio, L., de Sousa, L.M., Batjes, N.H., Heuvelink, G.B.M., Kempen, B., Ribeiro, E. and Rossiter, D.",
+      "publisher": "SOIL 7, 217-240 (peer-reviewed journal); ISRIC - World Soil Information",
+      "year": "2021",
+      "url": "https://doi.org/10.5194/soil-7-217-2021",
+      "source_type": "peer-reviewed article",
+      "auto_for": "soil",
+      "topics": ["soil", "soil map", "texture", "clay", "sand", "silt", "soil ph", "organic carbon", "cation exchange capacity", "soilgrids"],
+      "summary": "Describes the global 250 m SoilGrids maps of soil organic carbon, total nitrogen, coarse fragments, pH (water), cation exchange capacity, bulk density and texture at six depths to 200 cm, with spatial uncertainty. Regional predictions are coarse estimates; the paper does not describe a salinity map."
+    },
+    {
+      "id": "parc-pk",
+      "title": "Pakistan Agricultural Research Council (PARC) - national agricultural research organisation",
+      "authors": "PARC",
+      "publisher": "Government of Pakistan",
+      "year": "n/a",
+      "url": "https://www.parc.gov.pk",
+      "source_type": "government research organisation (contact point, not a treatment guide)",
+      "topics": ["pakistan", "research", "extension", "variety", "crop", "agronomist", "local advice", "national"],
+      "summary": "Apex national body that coordinates agricultural research in Pakistan together with provincial institutes and universities. Use it, or your provincial agriculture extension office, to confirm local crop, pest and product recommendations."
+    }
+  ]
+}
