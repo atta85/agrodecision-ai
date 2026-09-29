@@ -5,7 +5,9 @@ from __future__ import annotations
 from . import costing
 from .schemas import (CaseInput, CriticOut, DiagnosisOut, FarmerSummary, Finding, Hypothesis, InterventionOption,
                       Issue, MonitoringOut, OptionLine, OptionRisk, Report, RiskFlag, RiskOut)
+from .citations import check_claims
 from .sources import SourceRegistry
+from .tools import library
 
 
 def demo_report(case: CaseInput, up) -> Report:
@@ -13,6 +15,9 @@ def demo_report(case: CaseInput, up) -> Report:
     reg.add("user", "Farmer's report (DEMO)", f"Crop: {case.crop or 'citrus'}; symptoms and description as entered.")
     reg.add("weather", "Open-Meteo weather (DEMO sample text)", "Last 14 days: hot and dry, few rain days. DEMO DATA - not fetched.")
     reg.add("default", "Built-in generic rules (DEMO)", "Chemical treatments must be registered locally and confirmed by an agronomist.")
+    lib_ids = []
+    for e in library.search_library("citrus irrigation salinity leaching water stress evapotranspiration", k=3):
+        lib_ids.append(reg.add(**library.source_args(e)))
     prices = costing.merge_prices(costing.default_prices(), up.prices_override)
 
     monitoring = MonitoringOut(
@@ -22,7 +27,7 @@ def demo_report(case: CaseInput, up) -> Report:
         hypotheses=[
             Hypothesis(name="Water stress with possible salinity interaction", likelihood="moderate",
                        evidence_for=["Hot, dry conditions", "Low soil moisture reported"],
-                       evidence_against=["No EC measurement to confirm salts"], source_ids=["U1", "W1"]),
+                       evidence_against=["No EC measurement to confirm salts"], source_ids=["U1", "W1"] + lib_ids[:1]),
             Hypothesis(name="Nutrient imbalance", likelihood="low", evidence_for=["Leaf symptoms reported"],
                        evidence_against=["No tissue test"], source_ids=["U1"]),
             Hypothesis(name="Root or foliar disease", likelihood="low", evidence_for=[],
@@ -69,8 +74,9 @@ def demo_report(case: CaseInput, up) -> Report:
         options_plain=[OptionLine(key=o.key, title=o.title, one_line=o.description) for o in options],
         next_steps=["Take soil and leaf samples for a lab test", "Add clear photos of leaves (top and underside)"],
         warnings=["Confirm any chemical with an agronomist and check local rules."])
+    checks = check_claims(reg, monitoring, diagnosis, options, risk)
     return Report(
-        case=case, monitoring=monitoring, diagnosis=diagnosis, options=options, costs=costs, supply=supply, risk=risk,
+        case=case, citation_checks=checks, monitoring=monitoring, diagnosis=diagnosis, options=options, costs=costs, supply=supply, risk=risk,
         critic=critic, summary_en=summary, sources=reg.to_list(), demo=True,
         data_quality=["DEMO MODE: this is a sample analysis, not based on your data.",
                       "Costs use built-in PLACEHOLDER prices."],
