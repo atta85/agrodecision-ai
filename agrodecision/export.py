@@ -51,8 +51,13 @@ def to_markdown(rep: Report, costs: list[CostBreakdown] | None = None) -> str:
     L += [f"- ({i.severity}) {i.text}" for i in rep.critic.issues]
     if rep.critic.note_to_reviewer:
         L.append(f"\n**Note to reviewer:** {rep.critic.note_to_reviewer}")
-    L.append("\n## Sources")
-    for s in rep.sources:
-        L.append(f"- **[{s['id']}]** {s['title']} - {s['reliability']} - retrieved {s['retrieved']} {s['url']}")
+    L.append("\n## Citation check (keyword overlap - shows traceability, not proof)")
+    for x in rep.citation_checks:
+        L.append(f"- [{x['level']} {x['score']:.2f}] {x['section']}: {x['claim']} [{', '.join(x['source_ids']) or 'no source'}]")
+    L.append("\n## References and sources")
+    for s_ in rep.sources:
+        cite = s_.get("citation") or s_["title"]
+        meta = " | ".join(v for v in [s_.get("source_type", ""), s_.get("reliability", ""), "retrieved " + s_.get("retrieved", "")] if v)
+        L.append(f"- **[{s_['id']}]** {cite} ({meta}) {s_.get('url', '')}")
     L.append("\n---\nThis report supports, and does not replace, a qualified agronomist. Confirm any chemical use with an expert and local regulations.")
     return "\n".join(L)
