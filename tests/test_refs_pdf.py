@@ -84,3 +84,59 @@ def test_pdf_button_in_app(monkeypatch):
     at.button(key=f"res_prep_{cid}").click().run()
     assert not at.exception, at.exception
     assert at.session_state[f"res_pdf_{cid}"][:4] == b"%PDF"
+
+
+def test_openalex_429_is_handled(monkeypatch):
+    import agrodecision.tools.scholar as sch
+
+    class R:
+        status_code = 429
+
+        def raise_for_status(self):
+            raise RuntimeError("429")
+
+    monkeypatch.setattr(sch.requests, "get", lambda *a, **k: R())
+    monkeypatch.setattr(sch, "_BLOCKED_UNTIL", 0.0)
+    sch._CACHE.clear()
+    with pytest.raises(sch.ScholarUnavailable) as ei:
+        sch.search_papers("Wheat Heat stress (high temperature causing chlorosis) management")
+    assert "OPENALEX_API_KEY" in str(ei.value)
+    with pytest.raises(sch.ScholarUnavailable):          # blocked for a while: no second network call
+        sch.search_papers("another query")
+
+
+def test_openalex_query_cleaning_and_key(monkeypatch):
+    import agrodecision.tools.scholar as sch
+    seen = {}
+
+    class R:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"results": [{"title": "T", "publication_year": 2020, "doi": "https://doi.org/x",
+                                 "abstract_inverted_index": {"heat": [0], "stress": [1]}}, {"title": "no abstract"}]}
+
+    def fake_get(url, params=None, timeout=0):
+        seen.update(params)
+        return R()
+
+    monkeypatch.setattr(sch.requests, "get", fake_get)
+    monkeypatch.setattr(sch, "_BLOCKED_UNTIL", 0.0)
+    sch._CACHE.clear()
+    out = sch.search_papers("Wheat Heat stress (high temperature causing chlorosis) management now more words", api_key="k")
+    assert seen["api_key"] == "k" and "(" not in seen["search"] and len(seen["search"].split()) == 8
+    assert len(out) == 1 and out[0]["abstract"] == "heat stress"
+
+
+def test_pipeline_continues_when_openalex_limited(monkeypatch):
+    import agrodecision.pipeline as P
+    import agrodecision.tools.scholar as sch
+
+    def limited(*a, **k):
+        raise sch.ScholarUnavailable("OpenAlex answered HTTP 429. Add a free OPENALEX_API_KEY.")
+
+    monkeypatch.setattr(sch, "search_papers", limited)
+    assert P.scholar.ScholarUnavailable is sch.ScholarUnavailable

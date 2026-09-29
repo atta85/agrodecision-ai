@@ -124,3 +124,20 @@ def test_empty_reply_gives_clear_error(server, monkeypatch):
     with pytest.raises(L.GroqCallError) as ei:
         L.chat_text("openai/gpt-oss-120b", [{"role": "user", "content": "x"}])
     assert "empty reply" in str(ei.value)
+
+
+def test_pipeline_survives_openalex_429(server, monkeypatch):
+    import agrodecision.tools.scholar as sch
+
+    def limited(*a, **k):
+        raise sch.ScholarUnavailable("OpenAlex answered HTTP 429. Add a free OPENALEX_API_KEY.")
+
+    monkeypatch.setattr(sch, "search_papers", limited)
+    monkeypatch.setattr(P.weather, "fetch_weather", lambda lat, lon: {
+        "daily": {"temperature_2m_max": [30] * 21, "temperature_2m_min": [20] * 21, "precipitation_sum": [0] * 21,
+                  "et0_fao_evapotranspiration": [5] * 21}, "current": {"temperature_2m": 33, "relative_humidity_2m": 30}})
+    monkeypatch.setattr(P.soil, "fetch_soil", lambda lat, lon: None)
+    case = CaseInput(crop="wheat", lat=33.7, lon=72.8, symptoms=["yellowing"], description_en="yellow leaves", crop_value_at_risk=1000)
+    rep = P.run_analysis(case, P.Uploads(files=[], lite=True))
+    assert len(rep.options) == 3
+    assert any("Paper search (OpenAlex) was skipped" in w and "OPENALEX_API_KEY" in w for w in rep.warnings)
