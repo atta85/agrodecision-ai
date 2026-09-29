@@ -214,12 +214,14 @@ def run_analysis(case: CaseInput, up: Uploads, progress: Progress | None = None)
         if len(diagnosis.hypotheses) > 1 and diagnosis.hypotheses[1].name != diagnosis.primary_hypothesis:
             do_search(f"{case.crop} {diagnosis.hypotheses[1].name} symptoms management")
         try:
-            for p in scholar.search_papers(q, mailto=s.openalex_mailto, n=3):
+            for p in scholar.search_papers(q, api_key=s.openalex_api_key, mailto=s.openalex_mailto, n=3):
                 reg.add("scholar", f"{p['title']} ({p['year']})", p["abstract"], url=p["url"], publisher="OpenAlex index",
                         year=str(p["year"] or ""), source_type="scholarly literature (abstract only)",
                         citation=f"{p['title']} ({p['year']}). {p['url']}")
+        except scholar.ScholarUnavailable as e:
+            warnings.append(f"Paper search (OpenAlex) was skipped: {e} The analysis continued without papers.")
         except Exception as e:  # noqa: BLE001
-            warnings.append(f"Scholarly search failed: {e}")
+            warnings.append(f"Paper search (OpenAlex) failed: {str(e)[:160]}. The analysis continued without papers.")
 
     # 8. Intervention agent --------------------------------------------------------------------------------------
     prog(0.55, "Agent 3/6: Intervention options")

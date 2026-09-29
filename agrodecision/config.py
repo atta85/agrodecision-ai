@@ -40,6 +40,7 @@ class Settings:
     groq_base_url: str | None
     tavily_api_key: str | None
     openalex_mailto: str | None
+    openalex_api_key: str | None
     access_code: str | None
     demo_mode: bool
     model_reasoning: str
@@ -58,6 +59,7 @@ def settings() -> Settings:
         groq_base_url=get_setting("GROQ_BASE_URL"),  # only for tests / proxies
         tavily_api_key=get_setting("TAVILY_API_KEY"),
         openalex_mailto=get_setting("OPENALEX_MAILTO"),
+        openalex_api_key=get_setting("OPENALEX_API_KEY"),
         access_code=get_setting("APP_ACCESS_CODE"),
         demo_mode=_flag("DEMO_MODE", False),
         # Model IDs change over time. Check https://console.groq.com/docs/rate-limits
