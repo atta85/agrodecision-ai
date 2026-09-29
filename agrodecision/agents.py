@@ -13,7 +13,7 @@ import json
 from pydantic import BaseModel, ValidationError
 
 from .config import settings
-from .llm import LLMOutputError, extract_json, make_crew_llm
+from .llm import LLMOutputError, chat_completion, extract_json, make_crew_llm
 from .schemas import (CaseInput, CriticOut, DiagnosisOut, FarmerSummary, InterventionOut, MonitoringOut,
                       NarrativeOut, RiskOut)
 
@@ -79,6 +79,15 @@ AGENT_SPECS: dict[str, dict] = {
 
 
 # ----------------------------------------------------------------------------- runner
+RUN_NOTES: list[str] = []   # e.g. "monitoring: CrewAI wrapper failed (TimeoutError), used direct call"
+
+
+def pop_notes() -> list[str]:
+    out = list(RUN_NOTES)
+    RUN_NOTES.clear()
+    return out
+
+
 def run_agent_json(agent_key: str, task_text: str, out_model: type[BaseModel], max_tokens: int = 1800,
                    retries: int = 1) -> BaseModel:
     """Run one CrewAI agent (single task) and validate its JSON answer."""
@@ -95,10 +104,21 @@ def run_agent_json(agent_key: str, task_text: str, out_model: type[BaseModel], m
     prompt = task_text
     last_err: Exception | None = None
     for attempt in range(retries + 1):
-        task = Task(description=prompt, expected_output="One valid JSON object and nothing else.", agent=agent)
-        crew = Crew(agents=[agent], tasks=[task], process=Process.sequential, verbose=False)
-        result = crew.kickoff()
-        raw = getattr(result, "raw", None) or str(result)
+        try:
+            task = Task(description=prompt, expected_output="One valid JSON object and nothing else.", agent=agent)
+            crew = Crew(agents=[agent], tasks=[task], process=Process.sequential, verbose=False)
+            result = crew.kickoff()
+            raw = getattr(result, "raw", None) or str(result)
+            if not raw.strip():
+                raise RuntimeError("CrewAI returned an empty result")
+        except Exception as e:  # noqa: BLE001
+            # The CrewAI wrapper failed (for any reason). Ask the same agent persona directly, so one
+            # framework problem cannot stop the whole analysis. Real Groq errors are raised again below.
+            RUN_NOTES.append(f"{agent_key}: CrewAI wrapper failed ({type(e).__name__}: {str(e)[:120] or 'no message'}); "
+                             "used a direct Groq call with the same prompt.")
+            system = f"You are the {spec['role']}. Goal: {spec['goal']} Background: {spec['backstory']}"
+            raw = chat_completion(model, [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+                                  max_tokens=max_tokens)
         try:
             return out_model.model_validate(extract_json(raw))
         except (ValueError, ValidationError) as e:
