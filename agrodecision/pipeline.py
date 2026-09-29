@@ -259,6 +259,7 @@ def run_analysis(case: CaseInput, up: Uploads, progress: Progress | None = None)
     summary = A.run_agent_json("reporter", A.prompt_reporter(bundle[:3800] + f"\n\nCRITIC NOTE: {critic.note_to_reviewer}"),
                                A.FarmerSummary, 1200)
 
+    warnings.extend(A.pop_notes())
     cited, total = _sanitize(reg, monitoring, diagnosis, options, risk)
     if total:
         quality.append(f"{cited} of {total} agent statements carry a source ID; the rest are marked as model reasoning.")
