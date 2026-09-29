@@ -256,6 +256,9 @@ def chat_completion(model: str, messages: Any, max_tokens: int = 800, temperatur
             empty_retry = True
             max_tokens = int(min(max_tokens * 1.6, budget - in_tokens))
             continue
+        if not text:
+            raise GroqCallError(f"Groq returned an empty reply from model '{model}' (finish_reason="
+                                f"{getattr(choice, 'finish_reason', '?')}). Try REASONING_EFFORT = \"low\" or a different model in Secrets.")
         return text
 
 
