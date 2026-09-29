@@ -7,6 +7,7 @@ from __future__ import annotations
 import hmac
 import json
 import sys
+import traceback
 
 import pandas as pd
 import streamlit as st
@@ -353,6 +354,9 @@ def render_run(lang: str) -> None:
                  inventory=d.get("inventory"), lite=not st.session_state.get("full_notes", False))
     if st.session_state.run_error:
         st.error(st.session_state.run_error)
+        if st.session_state.get("run_trace"):
+            with st.expander("Technical details (send this to the developer)"):
+                st.code(st.session_state.run_trace)
         c1, c2 = st.columns(2)
         if c1.button("Try again", key="btn_retry"):
             st.session_state.run_error = None
@@ -390,8 +394,9 @@ def render_run(lang: str) -> None:
         st.session_state.run_error = str(e)
         st.rerun()
     except Exception as e:  # noqa: BLE001
-        st.session_state.run_error = (f"The analysis stopped: {e}\n\nTips: check the model names and your Groq key/limits "
-                                      "in the app Secrets, then try again.")
+        st.session_state.run_error = (f"The analysis stopped: [{type(e).__name__}] {str(e) or '(no message)'}\n\n"
+                                      "Tips: click 'Test Groq connection' in the sidebar; check model names and your Groq key/limits in Secrets.")
+        st.session_state.run_trace = traceback.format_exc()[-3500:]
         st.rerun()
     finally:
         set_status_callback(None)
