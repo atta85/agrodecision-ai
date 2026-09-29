@@ -213,6 +213,7 @@ class Report(_Base):
     summary_en: FarmerSummary = Field(default_factory=FarmerSummary)
     summary_local: Optional[FarmerSummary] = None
     sources: list[dict] = Field(default_factory=list)
+    citation_checks: list[dict] = Field(default_factory=list)
     data_quality: list[str] = Field(default_factory=list)
     prices_source: str = "default"
     warnings: list[str] = Field(default_factory=list)
