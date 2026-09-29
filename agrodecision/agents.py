@@ -19,7 +19,9 @@ from .schemas import (CaseInput, CriticOut, DiagnosisOut, FarmerSummary, Interve
 
 RULES = (
     "RULES: Use ONLY the EVIDENCE block below; do not invent facts, numbers or references. "
-    "Cite evidence by ID (for example U1, W1, P1) in the source_ids fields. If a statement is not supported by the "
+    "Cite evidence by ID (for example U1, W1, P1, L1, T1, R1) in the source_ids fields. For statements about causes, "
+    "thresholds or good practice, cite a reference source (L = curated library, T = trusted web page, R = paper) whenever one "
+    "in the evidence covers the topic; do not cite a source for something it does not discuss. If a statement is not supported by the "
     "evidence, leave source_ids empty and begin that text with 'Model reasoning:'. "
     "Never present an uncertain diagnosis as established fact. Do not recommend specific pesticide brands or doses. "
     "Farmers may be reading a translation, so use clear, simple words. "
