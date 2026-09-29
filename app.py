@@ -28,7 +28,9 @@ from agrodecision import costing, i18n, storage  # noqa: E402
 from agrodecision.config import COUNTRIES, settings  # noqa: E402
 from agrodecision.export import to_markdown  # noqa: E402
 from agrodecision.llm import MissingKeyError, set_status_callback  # noqa: E402
+from agrodecision.citations import summarize as summarize_checks  # noqa: E402
 from agrodecision.media import pdf_extract  # noqa: E402
+from agrodecision.pdf_report import build_pdf  # noqa: E402
 from agrodecision.pipeline import Uploads, run_analysis  # noqa: E402
 from agrodecision.schemas import CaseInput, FarmerSummary, Report  # noqa: E402
 from agrodecision.tools import weather  # noqa: E402
@@ -407,6 +409,50 @@ def cite(ids: list[str]) -> str:
     return f"`[{', '.join(ids)}]`" if ids else "*(model reasoning, no source)*"
 
 
+def render_references(rep: Report) -> None:
+    """Bibliography with source type/reliability + the keyword citation check."""
+    kinds: dict[str, int] = {}
+    for x in rep.sources:
+        kinds[x.get("kind", "")] = kinds.get(x.get("kind", ""), 0) + 1
+    ext = kinds.get("library", 0) + kinds.get("web", 0) + kinds.get("scholar", 0)
+    cs = summarize_checks(rep.citation_checks)
+    st.caption(f"Sources used: {len(rep.sources)} total, {ext} external references "
+               f"(library {kinds.get('library', 0)}, web {kinds.get('web', 0)}, papers {kinds.get('scholar', 0)}). "
+               f"Citation check: {cs['supported']} of {cs['total']} statements well traceable, {cs['partial']} partly, "
+               f"{cs['weak']} weakly, {cs['unsourced']} without a source.")
+    with st.expander("References & citation check"):
+        st.markdown("**Bibliography** (external references first)")
+        order = {"library": 0, "web": 1, "scholar": 2, "soil": 3, "weather": 4, "org": 5, "user": 6, "photo": 7, "default": 8, "calc": 9}
+        for x in sorted(rep.sources, key=lambda r: (order.get(r.get("kind", ""), 9), r["id"])):
+            cite_txt = x.get("citation") or x["title"]
+            meta = " | ".join(v for v in [x.get("source_type", ""), x.get("reliability", ""), "retrieved " + x.get("retrieved", "")] if v)
+            link = f" - [{x['url']}]({x['url']})" if x.get("url") else ""
+            st.markdown(f"**[{x['id']}]** {cite_txt}{link}  \n*{meta}*")
+        st.markdown("**Citation check** - keyword overlap between each statement and the sources it cites. "
+                    "It shows traceability, not proof: read the sources.")
+        if rep.citation_checks:
+            icon = {"supported": "🟢 supported", "partial": "🟠 partial", "weak": "🔴 weak", "unsourced": "⚪ no source"}
+            st.dataframe(pd.DataFrame([{"Where": c["section"], "Statement": c["claim"], "Cited": ", ".join(c["source_ids"]) or "-",
+                                        "Traceability": f"{icon[c['level']]} ({c['score']:.2f})"} for c in rep.citation_checks]),
+                         hide_index=True, width="stretch")
+
+
+def pdf_controls(rep: Report, costs, cid: str, decisions: list[dict], key_prefix: str) -> None:
+    """Two-step PDF: prepare (builds the file) then download."""
+    lang = rep.case.language
+    if st.button("📄 Prepare PDF report", key=f"{key_prefix}_prep_{cid}"):
+        try:
+            with st.spinner("Building PDF..."):
+                st.session_state[f"{key_prefix}_pdf_{cid}"] = build_pdf(rep, costs, decisions, cid, lang)
+        except Exception as e:  # noqa: BLE001
+            st.error(f"PDF could not be created: {e}")
+    data = st.session_state.get(f"{key_prefix}_pdf_{cid}")
+    if data:
+        st.download_button("⬇️ Download PDF", data, file_name=f"agrodecision_{cid}.pdf", mime="application/pdf",
+                           key=f"{key_prefix}_dl_{cid}")
+    st.caption("Tip: save your decision first, then prepare the PDF so the decision is included.")
+
+
 def render_results(lang: str) -> None:
     rep = Report.model_validate(st.session_state.report)
     cid = st.session_state.case_id
@@ -510,11 +556,7 @@ def render_results(lang: str) -> None:
     if rep.photo_notes:
         with st.expander("What the photo analysis saw (not a diagnosis)"):
             st.json(rep.photo_notes)
-    with st.expander("Evidence & sources (citations)"):
-        for s in rep.sources:
-            link = f" - [{s['url']}]({s['url']})" if s.get("url") else ""
-            st.markdown(f"**[{s['id']}]** {s['title']} - *{s['reliability']}* - retrieved {s['retrieved']}{link}")
-            st.caption(s["summary"][:600])
+    render_references(rep)
 
     # ---- HUMAN DECISION GATE
     st.divider()
@@ -571,6 +613,7 @@ def render_results(lang: str) -> None:
             st.success(T("saved"))
 
     st.divider()
+    pdf_controls(rep, costs, cid, (storage.get_case(cid) or {}).get("decisions", []), "res")
     d1, d2 = st.columns(2)
     d1.download_button("⬇️ Report (Markdown)", to_markdown(rep, costs), file_name=f"agrodecision_{cid}.md", key=f"dl_md_{cid}")
     d2.download_button("⬇️ Data (JSON)", json.dumps(rep.model_dump(), ensure_ascii=False, indent=2),
@@ -607,6 +650,7 @@ def render_history() -> None:
     if st.button("Open this case in the results view", key=f"hist_open_{sel}"):
         st.session_state.update(report=data["report"], case=data["input"], case_id=sel, stage="results")
         st.success("Loaded - open the first tab to see it.")
+    pdf_controls(rep, rep.costs, sel, data["decisions"], "hist")
     st.download_button("⬇️ This case (JSON)", json.dumps(data, ensure_ascii=False, indent=2), file_name=f"case_{sel}.json", key=f"hist_dl_{sel}")
     st.download_button("⬇️ All cases (JSON)", json.dumps(storage.export_all(), ensure_ascii=False, indent=2), file_name="all_cases.json", key="hist_dl_all")
 
