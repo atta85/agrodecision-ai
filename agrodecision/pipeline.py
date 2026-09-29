@@ -15,8 +15,9 @@ from .media import describe_photo, pdf_extract, prepare_image
 from .rag_lite import top_chunks
 from .schemas import (CaseInput, CostBreakdown, DiagnosisOut, InterventionOption, MonitoringOut, Report, RiskOut,
                       SupplyCheck)
-from .sources import SourceRegistry
-from .tools import scholar, search, soil, weather
+from .sources import SourceRegistry, classify_url
+from .citations import check_claims, summarize
+from .tools import library, scholar, search, soil, weather
 
 Progress = Callable[[float, str], None]
 
@@ -161,13 +162,32 @@ def run_analysis(case: CaseInput, up: Uploads, progress: Progress | None = None)
         warnings.append("No location coordinates: weather and soil lookups were skipped.")
         quality.append("Weather and soil data were not retrieved because the location was not confirmed.")
 
-    # 5. web search (optional) -----------------------------------------------------------------------
+    # 5. curated reference library + web search (optional) ----------------------------------------------
+    lib_used: set[str] = set()
+    seen_urls: set[str] = set()
+
+    def add_library(entries: list[dict]) -> None:
+        for e in entries:
+            if e["id"] not in lib_used:
+                lib_used.add(e["id"])
+                reg.add(**library.source_args(e))
+
+    symptom_q = " ".join([case.crop, case.irrigation, case.soil_texture_user, *case.symptoms, case.description_en[:300]])
+    add_library(library.search_library(symptom_q, k=3))
+    kinds_now = {r["kind"] for r in reg.to_list()}
+    add_library(library.auto_refs(kinds_now))
+
     def do_search(q: str) -> None:
         if not s.tavily_api_key:
             return
         try:
             for it in search.web_search(q, s.tavily_api_key):
-                reg.add("web", it["title"] or it["url"], it["content"], url=it["url"])
+                if it["url"] in seen_urls:
+                    continue
+                seen_urls.add(it["url"])
+                host, label = classify_url(it["url"])
+                reg.add("web", it["title"] or it["url"], it["content"], url=it["url"], publisher=host, source_type=label,
+                        citation=f"{it['title']}. {host}. {it['url']}")
         except Exception as e:  # noqa: BLE001
             warnings.append(f"Web search failed: {e}")
 
@@ -175,7 +195,7 @@ def run_analysis(case: CaseInput, up: Uploads, progress: Progress | None = None)
         prog(0.26, "Searching trusted agricultural sources")
         do_search(f"{case.crop} {' '.join(case.symptoms[:3])} causes diagnosis")
     else:
-        quality.append("Web search is switched off (no TAVILY_API_KEY): no web references were gathered.")
+        quality.append("Web search is switched off (no TAVILY_API_KEY): references come from the curated library and papers only.")
 
     # 6. Monitoring agent -----------------------------------------------------------------------------
     prog(0.32, "Agent 1/6: Crop Monitoring")
@@ -185,13 +205,19 @@ def run_analysis(case: CaseInput, up: Uploads, progress: Progress | None = None)
     prog(0.42, "Agent 2/6: Biological Diagnosis")
     diagnosis: DiagnosisOut = A.run_agent_json("diagnosis", A.prompt_diagnosis(reg.evidence_block(), monitoring), DiagnosisOut, 1800)
 
-    # extra references about the leading hypothesis (feeds interventions / risk / critic)
+    # extra references about the leading hypotheses (feed interventions / risk / critic)
     if diagnosis.primary_hypothesis:
+        hyp_names = " ".join(h.name for h in diagnosis.hypotheses[:3])
+        add_library(library.search_library(f"{case.crop} {diagnosis.primary_hypothesis} {hyp_names}", k=3, exclude=lib_used))
         q = f"{case.crop} {diagnosis.primary_hypothesis} management"
         do_search(q)
+        if len(diagnosis.hypotheses) > 1 and diagnosis.hypotheses[1].name != diagnosis.primary_hypothesis:
+            do_search(f"{case.crop} {diagnosis.hypotheses[1].name} symptoms management")
         try:
             for p in scholar.search_papers(q, mailto=s.openalex_mailto, n=3):
-                reg.add("scholar", f"{p['title']} ({p['year']})", p["abstract"], url=p["url"])
+                reg.add("scholar", f"{p['title']} ({p['year']})", p["abstract"], url=p["url"], publisher="OpenAlex index",
+                        year=str(p["year"] or ""), source_type="scholarly literature (abstract only)",
+                        citation=f"{p['title']} ({p['year']}). {p['url']}")
         except Exception as e:  # noqa: BLE001
             warnings.append(f"Scholarly search failed: {e}")
 
@@ -261,12 +287,18 @@ def run_analysis(case: CaseInput, up: Uploads, progress: Progress | None = None)
 
     warnings.extend(A.pop_notes())
     cited, total = _sanitize(reg, monitoring, diagnosis, options, risk)
+    checks = check_claims(reg, monitoring, diagnosis, options, risk)
+    cs = summarize(checks)
     if total:
-        quality.append(f"{cited} of {total} agent statements carry a source ID; the rest are marked as model reasoning.")
+        quality.append(f"{cited} of {total} agent statements carry a source ID; the rest are marked as model reasoning. "
+                       f"Keyword check of cited statements: {cs['supported']} well traceable, {cs['partial']} partly, "
+                       f"{cs['weak']} weakly - this is a rough check, read the sources.")
+    if not any(r["kind"] in ("library", "web", "scholar") for r in reg.to_list()):
+        quality.append("No external reference sources matched this case, so scientific claims rest on model knowledge only.")
 
     prog(1.0, "Analysis complete - waiting for your decision")
     return Report(
         case=case, photo_notes=photo_notes, monitoring=monitoring, diagnosis=diagnosis, options=options,
         costs=costs, supply=supply, risk=risk, critic=critic, cost_notes=cost_notes, supply_notes=supply_notes,
-        summary_en=summary, sources=reg.to_list(), data_quality=quality, prices_source=prices_source, warnings=warnings,
+        summary_en=summary, sources=reg.to_list(), citation_checks=checks, data_quality=quality, prices_source=prices_source, warnings=warnings,
     )
