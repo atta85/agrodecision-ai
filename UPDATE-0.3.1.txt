@@ -1,0 +1,16 @@
+AgroDecision AI - update 0.3.0 -> 0.3.1  (fixes the OpenAlex "429 Too Many Requests" message)
+
+Replace these files on GitHub (same folders), then Streamlit -> Manage app -> Reboot.
+The main page must show:  Build 0.3.1 | Python 3.12
+
+  agrodecision/__init__.py
+  agrodecision/config.py
+  agrodecision/pipeline.py
+  agrodecision/tools/scholar.py
+  .streamlit/secrets.toml.example   (documentation only - shows the new secret)
+  README.md                         (optional)
+  tests/test_refs_pdf.py            (optional)
+  tests/test_groq_wire.py           (optional)
+
+Then add this line to the app Secrets (free key: https://openalex.org/settings/api):
+  OPENALEX_API_KEY = "your-free-key"
