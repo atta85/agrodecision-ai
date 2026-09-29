@@ -1,0 +1,22 @@
+{
+  "_note": "PLACEHOLDER unit costs in the currency chosen in the app. They are NOT real market prices. Edit them in the sidebar or upload your own price CSV.",
+  "items": {
+    "extra_irrigation_m3":   {"label": "Extra irrigation water", "unit": "m3", "category": "material", "unit_cost": 5},
+    "leaching_water_m3":     {"label": "Leaching / flushing water", "unit": "m3", "category": "material", "unit_cost": 5},
+    "gypsum_kg":             {"label": "Gypsum (soil amendment)", "unit": "kg", "category": "material", "unit_cost": 40},
+    "organic_matter_kg":     {"label": "Compost / organic matter", "unit": "kg", "category": "material", "unit_cost": 15},
+    "fertilizer_npk_kg":     {"label": "Balanced NPK fertiliser", "unit": "kg", "category": "material", "unit_cost": 150},
+    "micronutrient_foliar_l":{"label": "Foliar micronutrient mix", "unit": "L", "category": "material", "unit_cost": 1500},
+    "approved_treatment_l":  {"label": "Locally registered treatment (product to be confirmed by an agronomist)", "unit": "L", "category": "material", "unit_cost": 3000},
+    "labor_hour":            {"label": "Farm labour", "unit": "hour", "category": "labor", "unit_cost": 200},
+    "skilled_labor_hour":    {"label": "Agronomist / technician time", "unit": "hour", "category": "labor", "unit_cost": 800},
+    "tractor_hour":          {"label": "Tractor / implement", "unit": "hour", "category": "equipment", "unit_cost": 2500},
+    "pump_hour":             {"label": "Irrigation pump", "unit": "hour", "category": "equipment", "unit_cost": 400},
+    "sprayer_hour":          {"label": "Sprayer", "unit": "hour", "category": "equipment", "unit_cost": 300},
+    "fuel_energy_unit":      {"label": "Fuel / electricity", "unit": "unit", "category": "operation", "unit_cost": 60},
+    "extra_monitoring_visit":{"label": "Extra monitoring visit", "unit": "visit", "category": "operation", "unit_cost": 500},
+    "soil_test_sample":      {"label": "Soil / EC / pH lab test", "unit": "sample", "category": "diagnostic", "unit_cost": 2000},
+    "tissue_test_sample":    {"label": "Plant tissue nutrient test", "unit": "sample", "category": "diagnostic", "unit_cost": 3000},
+    "pathogen_test_sample":  {"label": "Pathogen / disease diagnostic test", "unit": "sample", "category": "diagnostic", "unit_cost": 4000}
+  }
+}

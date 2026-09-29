@@ -1,0 +1,4 @@
+key,label,unit,category,unit_cost
+gypsum_kg,Gypsum,kg,material,40
+labor_hour,Farm labour,hour,labor,200
+pump_hour,Irrigation pump,hour,equipment,400

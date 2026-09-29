@@ -1,0 +1,9 @@
+# Python 3.12 ONLY. No litellm: the app talks to Groq directly through the official groq SDK.
+streamlit==1.64.0
+crewai==1.15.22
+groq==1.7.0
+requests>=2.32
+pydantic>=2.7
+pymupdf>=1.24
+pillow>=10.3
+pandas>=2.2

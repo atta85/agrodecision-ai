@@ -1,0 +1,5 @@
+key,on_hand,lead_time_days,min_order_qty
+gypsum_kg,100,5,50
+fertilizer_npk_kg,0,7,50
+labor_hour,40,0,0
+pump_hour,20,0,0

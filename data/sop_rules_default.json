@@ -1,0 +1,12 @@
+{
+  "_note": "Generic built-in rules. They are NOT legal or regulatory advice and do NOT replace your organisation's SOPs. Upload your own SOP file in the app to override them.",
+  "rules": [
+    "Any pesticide, fungicide or other chemical must be registered for the specific crop in the country where it is used, and the product label must be followed.",
+    "Never apply a chemical treatment before the cause has been confirmed by an agronomist or a diagnostic test.",
+    "Workers handling chemicals need the personal protective equipment stated on the label and must respect re-entry and pre-harvest intervals.",
+    "Do not apply treatments in a way that risks contaminating water sources, neighbouring fields or bystanders.",
+    "Changes to irrigation or fertiliser rates should be checked against current soil and water test results, especially where salinity is possible.",
+    "Keep a written record of each intervention: date, product or action, quantity, who approved it.",
+    "If a disease or pest of quarantine concern is suspected, report it to the local agriculture department before moving plants or produce."
+  ]
+}
