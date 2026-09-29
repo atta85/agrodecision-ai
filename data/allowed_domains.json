@@ -1,9 +1,25 @@
 {
   "_note": "Domains that the web-search tool may cite. Edit freely. Keep the list to trustworthy agricultural sources.",
   "domains": [
-    "fao.org", "eppo.int", "cabidigitallibrary.org", "apsnet.org",
-    "ipm.ucanr.edu", "extension.umn.edu", "extension.psu.edu", "extension.org",
-    "agriculture.gov.au", "parc.gov.pk", "aari.punjab.gov.pk", "pakistan.gov.pk",
-    "icar.org.in", "cimmyt.org", "irri.org", "worldbank.org", "ars.usda.gov", "nifa.usda.gov"
+    "fao.org",
+    "openknowledge.fao.org",
+    "agris.fao.org",
+    "who.int",
+    "eppo.int",
+    "cabidigitallibrary.org",
+    "apsnet.org",
+    "ipm.ucanr.edu",
+    "ucanr.edu",
+    "extension.umn.edu",
+    "extension.psu.edu",
+    "extension.org",
+    "parc.gov.pk",
+    "isric.org",
+    "soilgrids.org",
+    "icar.org.in",
+    "cimmyt.org",
+    "irri.org",
+    "ars.usda.gov",
+    "nifa.usda.gov"
   ]
 }
