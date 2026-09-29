@@ -59,6 +59,7 @@ def test_full_pipeline_over_wire(server, monkeypatch):
     assert [o.key for o in rep.options] == ["A", "B", "C"]
     assert rep.monitoring.findings[0].source_ids == ["W1"]      # invented X99 stripped
     assert rep.critic.issues and rep.summary_en.headline == "h"
+    assert any(x["kind"] == "library" for x in rep.sources) and rep.citation_checks
     assert len(fake_groq.Handler.log) >= 6                      # monitoring, diagnosis, intervention, risk, critic, reporter
     for req in fake_groq.Handler.log:
         for m in req["messages"]:
@@ -91,3 +92,35 @@ def test_selftest_against_fake_groq(server):
 def test_strip_extra_keys():
     msgs = [{"role": "system", "content": "x", "cache_breakpoint": True}]
     assert L._strip_extra_keys(msgs) == [{"role": "system", "content": "x"}]
+
+
+def test_agent_falls_back_when_crewai_wrapper_breaks(server, monkeypatch):
+    """Simulates the failure seen in the field: an exception with an EMPTY message inside CrewAI."""
+    from crewai import Crew
+    from agrodecision import agents as A
+
+    def boom(self, *a, **k):
+        raise Exception()
+
+    monkeypatch.setattr(Crew, "kickoff", boom)
+    out = A.run_agent_json("critic", "Task: review.", A.CriticOut, 500)
+    assert out.note_to_reviewer == "test first"
+    notes = A.pop_notes()
+    assert notes and "CrewAI wrapper failed" in notes[0]
+
+
+def test_empty_reply_gives_clear_error(server, monkeypatch):
+    class R:  # empty content every time
+        choices = [type("C", (), {"message": type("M", (), {"content": ""})(), "finish_reason": "length"})()]
+
+    class Fake:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    return R()
+
+    monkeypatch.setattr(L, "_client", lambda: Fake())
+    with pytest.raises(L.GroqCallError) as ei:
+        L.chat_text("openai/gpt-oss-120b", [{"role": "user", "content": "x"}])
+    assert "empty reply" in str(ei.value)
